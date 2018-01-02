@@ -11,23 +11,28 @@ import (
 	"strings"
 )
 
+type Object struct {
+	ObjectType string
+	Data       string
+}
+
 type BlobObject struct {
 	Size int
 	Data string
 }
 
-func parseBlob(data string) (*BlobObject, error) {
+func parseObject(data string) Object {
 	tokens := strings.SplitN(data, " ", 2)
+	return Object{tokens[0], tokens[1]}
+}
 
-	blob := tokens[0]
-	if blob != "blob" {
-		return nil, fmt.Errorf("not blob %s", blob)
+func parseBlob(obj Object) (*BlobObject, error) {
+	if obj.ObjectType != "blob" {
+		return nil, fmt.Errorf("not blob %s", obj.ObjectType)
 	}
 
-	data1 := tokens[1]
-
 	nullChar := string([]byte{0})
-	tokens = strings.Split(data1, nullChar)
+	tokens := strings.Split(obj.Data, nullChar)
 
 	contentSize, err := strconv.Atoi(tokens[0])
 	if err != nil {
@@ -73,7 +78,9 @@ func main() {
 		fmt.Printf("read %s\n", b)
 	}
 
-	blobObject, err := parseBlob(string(b))
+	object := parseObject(string(b))
+
+	blobObject, err := parseBlob(object)
 	if err != nil {
 		fmt.Printf("%v", err)
 		return
